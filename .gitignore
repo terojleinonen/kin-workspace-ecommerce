@@ -1,28 +1,40 @@
 # Dependencies
 node_modules/
-/vendor/
-yarn.lock
-package-lock.json
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 
-# Environment files
+# Next.js
+.next/
+out/
+build/
+dist/
+
+# Environment variables
 .env
 .env.local
-.env.*.local
-.env.development
-.env.test
-.env.production
+.env.development.local
+.env.test.local
+.env.production.local
 
-# Build output
-/dist
-/build
-/.next
-/out
+# Database
+*.db
+*.db-journal
+prisma/dev.db*
 
-# IDE specific files
-.idea/
+# Testing
+coverage/
+.nyc_output/
+junit.xml
+
+# IDE and editors
 .vscode/
-*.sublime-workspace
-*.sublime-project
+.idea/
+*.swp
+*.swo
+*~
 
 # OS generated files
 .DS_Store
@@ -34,29 +46,80 @@ ehthumbs.db
 Thumbs.db
 
 # Logs
-logs
+logs/
 *.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
 
-# Testing
-/coverage
-.nyc_output
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# Vercel
+.vercel
 
 # Temporary files
-*.swp
-*.swo
-*.tmp
-*.temp
+tmp/
+temp/
+
+# Build artifacts
+*.tgz
+*.tar.gz
+
+# Local development
+.env.example.local
+
+# Demo files (keep these in repo but ignore local modifications)
+# Remove these lines if you want to track demo data changes
+# prisma/dev.db
+# demo-data/
+
+# Production secrets (never commit these)
+.env.production
+.env.production.local
+
+# Backup files
+*.backup
+*.bak
 
 # Cache directories
 .cache/
-.npm
-.eslintcache
+.parcel-cache/
 
 # Optional npm cache directory
 .npm
 
+# Optional eslint cache
+.eslintcache
+
+# Microbundle cache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
 # Optional REPL history
 .node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# dotenv environment variables file
+.env.test
+
+# Stores VSCode versions used for testing VSCode extensions
+.vscode-test
+
+# yarn v2
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnp.*
