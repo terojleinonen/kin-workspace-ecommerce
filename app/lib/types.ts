@@ -149,3 +149,91 @@ export interface ReviewFetchOptions {
     withPhotos?: boolean
   }
 }
+
+// Order Types
+export interface Address {
+  name: string
+  street: string
+  city: string
+  state: string
+  zipCode: string
+  country: string
+}
+
+export interface OrderItem {
+  id: string
+  productId: string
+  quantity: number
+  price: number
+  variant?: {
+    size?: string
+    color?: string
+  }
+  product: {
+    id: string
+    name: string
+    slug: string
+    image: string
+  }
+}
+
+export interface Order {
+  id: string
+  userId: string
+  status: OrderStatus
+  total: number
+  subtotal: number
+  tax: number
+  shipping: number
+  paymentMethod: string
+  paymentStatus: PaymentStatus
+  shippingAddress: Address
+  billingAddress: Address
+  createdAt: string
+  updatedAt: string
+  items: OrderItem[]
+}
+
+export enum OrderStatus {
+  PENDING = 'PENDING',
+  CONFIRMED = 'CONFIRMED',
+  PROCESSING = 'PROCESSING',
+  SHIPPED = 'SHIPPED',
+  DELIVERED = 'DELIVERED',
+  CANCELLED = 'CANCELLED',
+  REFUNDED = 'REFUNDED'
+}
+
+export enum PaymentStatus {
+  PENDING = 'PENDING',
+  PAID = 'PAID',
+  FAILED = 'FAILED',
+  REFUNDED = 'REFUNDED'
+}
+
+export interface OrderFilters {
+  status?: OrderStatus[]
+  paymentStatus?: PaymentStatus[]
+  startDate?: string
+  endDate?: string
+  search?: string
+  sortBy?: 'date' | 'total' | 'status'
+  sortOrder?: 'asc' | 'desc'
+}
+
+export interface OrderPagination {
+  page: number
+  limit: number
+  total: number
+  totalPages: number
+}
+
+export interface OrdersResponse {
+  orders: Order[]
+  pagination: OrderPagination
+}
+
+export interface OrderStatusUpdate {
+  status: OrderStatus
+  note?: string
+}

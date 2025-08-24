@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useCart } from '@/app/contexts/CartContext'
 import { ShippingAddress, BillingAddress, PaymentMethod } from '@/app/lib/checkout-types'
 import { calculateOrderSummary, generateOrderNumber, getEstimatedDelivery } from '@/app/lib/checkout-utils'
@@ -8,6 +8,7 @@ import ShippingForm from './ShippingForm'
 import BillingForm from './BillingForm'
 import PaymentForm from './PaymentForm'
 import OrderSummary from './OrderSummary'
+import DemoModeIndicator from './DemoModeIndicator'
 import { useRouter } from 'next/navigation'
 
 export default function CheckoutForm() {
@@ -15,6 +16,8 @@ export default function CheckoutForm() {
   const router = useRouter()
   const [currentStep, setCurrentStep] = useState(1)
   const [isProcessing, setIsProcessing] = useState(false)
+  const [paymentInfo, setPaymentInfo] = useState<any>(null)
+  const [error, setError] = useState<string | null>(null)
 
   const [shippingData, setShippingData] = useState<ShippingAddress>({
     firstName: '',
@@ -51,6 +54,23 @@ export default function CheckoutForm() {
     { number: 4, title: 'Review', completed: false }
   ]
 
+  // Fetch payment info on component mount
+  useEffect(() => {
+    const fetchPaymentInfo = async () => {
+      try {
+        const response = await fetch('/api/payment/process')
+        if (response.ok) {
+          const data = await response.json()
+          setPaymentInfo(data)
+        }
+      } catch (error) {
+        console.error('Failed to fetch payment info:', error)
+      }
+    }
+    
+    fetchPaymentInfo()
+  }, [])
+
   const handleNextStep = () => {
     if (currentStep < 4) {
       setCurrentStep(currentStep + 1)
@@ -65,39 +85,66 @@ export default function CheckoutForm() {
 
   const handlePlaceOrder = async () => {
     setIsProcessing(true)
+    setError(null)
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000))
-      
-      const orderNumber = generateOrderNumber()
-      const estimatedDelivery = getEstimatedDelivery()
-      
-      // Store order data (in real app, this would be sent to backend)
-      const orderData = {
-        orderNumber,
-        items: cart.items.map(item => ({
-          productId: item.product.id,
-          name: item.product.name,
-          price: item.product.price,
-          quantity: item.quantity,
-          image: item.product.image
-        })),
-        shipping: shippingData,
-        billing: billingData,
-        orderSummary,
-        estimatedDelivery
+      // Get auth token from localStorage (in a real app, this would be from auth context)
+      const token = localStorage.getItem('authToken')
+      if (!token) {
+        throw new Error('Please log in to complete your order')
       }
-      
-      localStorage.setItem('lastOrder', JSON.stringify(orderData))
-      
-      // Clear cart and redirect to success page
-      clearCart()
-      router.push(`/checkout/success?order=${orderNumber}`)
+
+      // Prepare cart items for API
+      const cartItems = cart.items.map(item => ({
+        productId: item.product.id,
+        quantity: item.quantity,
+        price: item.product.price,
+        variant: null // Add variant support if needed
+      }))
+
+      // Process payment through API
+      const response = await fetch('/api/payment/process', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          amount: orderSummary.total,
+          paymentMethod: paymentData,
+          shippingAddress: shippingData,
+          billingAddress: billingData,
+          cartItems,
+          orderSummary
+        })
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Payment failed')
+      }
+
+      if (result.success) {
+        // Store order data for success page
+        const orderData = {
+          ...result.order,
+          receipt: result.receipt,
+          isDemoTransaction: result.isDemoTransaction
+        }
+        
+        localStorage.setItem('lastOrder', JSON.stringify(orderData))
+        
+        // Clear cart and redirect to success page
+        clearCart()
+        router.push(`/checkout/success?order=${result.order.id}`)
+      } else {
+        throw new Error(result.message || 'Payment failed')
+      }
       
     } catch (error) {
       console.error('Order processing failed:', error)
-      // Handle error (show error message)
+      setError(error instanceof Error ? error.message : 'An error occurred while processing your order')
     } finally {
       setIsProcessing(false)
     }
@@ -105,6 +152,16 @@ export default function CheckoutForm() {
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-8">
+      {/* Demo Mode Indicator */}
+      {paymentInfo?.isDemo && <DemoModeIndicator />}
+      
+      {/* Error Message */}
+      {error && (
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-red-800 font-medium">{error}</p>
+        </div>
+      )}
+      
       {/* Progress Steps */}
       <div className="mb-8">
         <div className="flex items-center justify-between">
@@ -161,6 +218,7 @@ export default function CheckoutForm() {
               onChange={setPaymentData}
               onNext={handleNextStep}
               onPrev={handlePrevStep}
+              paymentInfo={paymentInfo}
             />
           )}
           

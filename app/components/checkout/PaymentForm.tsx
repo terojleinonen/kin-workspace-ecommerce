@@ -9,9 +9,10 @@ interface PaymentFormProps {
   onChange: (data: PaymentMethod) => void
   onNext: () => void
   onPrev: () => void
+  paymentInfo?: any
 }
 
-export default function PaymentForm({ data, onChange, onNext, onPrev }: PaymentFormProps) {
+export default function PaymentForm({ data, onChange, onNext, onPrev, paymentInfo }: PaymentFormProps) {
   const [errors, setErrors] = useState<Record<string, string>>({})
 
   const handleChange = (field: keyof PaymentMethod, value: string) => {
@@ -221,18 +222,62 @@ export default function PaymentForm({ data, onChange, onNext, onPrev }: PaymentF
           </>
         )}
 
+        {/* Demo Mode Quick Fill */}
+        {paymentInfo?.isDemo && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <h4 className="font-satoshi font-semibold text-blue-900 mb-3">
+              Demo Mode - Quick Fill Options
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {paymentInfo.demoInfo?.scenarios?.slice(0, 4).map((scenario: any, index: number) => (
+                <button
+                  key={index}
+                  type="button"
+                  onClick={() => {
+                    onChange({
+                      ...data,
+                      cardNumber: scenario.cardNumber,
+                      expiryDate: '12/25',
+                      cvv: '123',
+                      cardholderName: 'Demo User'
+                    })
+                  }}
+                  className="text-left p-3 bg-white border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors"
+                >
+                  <div className="font-medium text-blue-900 text-sm">{scenario.name}</div>
+                  <div className="text-blue-700 text-xs mt-1">{scenario.description}</div>
+                  <div className="text-blue-600 text-xs mt-1 font-mono">
+                    {scenario.cardNumber.replace(/(\d{4})/g, '$1 ').trim()}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Security Notice */}
-        <div className="bg-warm-beige/20 rounded-lg p-4">
+        <div className={`rounded-lg p-4 ${paymentInfo?.isDemo ? 'bg-blue-50 border border-blue-200' : 'bg-warm-beige/20'}`}>
           <div className="flex items-start space-x-3">
-            <div className="w-5 h-5 bg-matte-black rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-              <span className="text-soft-white text-xs">🔒</span>
+            <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
+              paymentInfo?.isDemo ? 'bg-blue-600' : 'bg-matte-black'
+            }`}>
+              <span className="text-white text-xs">
+                {paymentInfo?.isDemo ? '🎭' : '🔒'}
+              </span>
             </div>
             <div>
-              <h4 className="font-satoshi font-semibold text-matte-black mb-1">
-                Secure Payment
+              <h4 className={`font-satoshi font-semibold mb-1 ${
+                paymentInfo?.isDemo ? 'text-blue-900' : 'text-matte-black'
+              }`}>
+                {paymentInfo?.isDemo ? 'Demo Payment Processing' : 'Secure Payment'}
               </h4>
-              <p className="text-slate-gray text-sm">
-                Your payment information is encrypted and secure. We never store your card details.
+              <p className={`text-sm ${
+                paymentInfo?.isDemo ? 'text-blue-800' : 'text-slate-gray'
+              }`}>
+                {paymentInfo?.isDemo 
+                  ? 'This is a demonstration. No real payment will be processed and no charges will be made to any card.'
+                  : 'Your payment information is encrypted and secure. We never store your card details.'
+                }
               </p>
             </div>
           </div>

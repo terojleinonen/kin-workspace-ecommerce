@@ -55,3 +55,8 @@ export interface Order {
   createdAt: Date
   estimatedDelivery: Date
 }
+
+// Type aliases for compatibility with existing code
+export type ShippingInfo = ShippingAddress
+export type BillingInfo = BillingAddress
+export type PaymentInfo = PaymentMethod
