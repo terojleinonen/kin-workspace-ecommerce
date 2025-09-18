@@ -225,3 +225,17 @@ model OrderItem {
 
   @@map("order_items")
 }
+
+// CMS Sync Status
+model SyncStatus {
+  id                  Int       @id @default(autoincrement())
+  lastSuccessfulSync  DateTime? @map("last_successful_sync")
+  lastAttemptedSync   DateTime? @map("last_attempted_sync")
+  isHealthy           Boolean   @default(false) @map("is_healthy")
+  errorCount          Int       @default(0) @map("error_count")
+  lastError           String?   @map("last_error") @db.Text
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+
+  @@map("sync_status")
+}
