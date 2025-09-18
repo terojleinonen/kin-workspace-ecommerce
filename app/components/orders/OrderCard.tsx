@@ -10,6 +10,7 @@ import {
   getOrderItemsCount 
 } from '@/app/lib/order-utils'
 import OrderStatusIndicator from './OrderStatusIndicator'
+import DemoBadge from '../DemoBadge'
 
 interface OrderCardProps {
   order: Order
@@ -22,9 +23,12 @@ export default function OrderCard({ order }: OrderCardProps) {
     <div className="bg-white rounded-lg border border-warm-beige p-6 hover:shadow-md transition-shadow">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
         <div className="mb-2 sm:mb-0">
-          <h3 className="font-satoshi font-semibold text-lg text-matte-black">
-            {formatOrderId(order.id)}
-          </h3>
+          <div className="flex items-center gap-2 mb-1">
+            <h3 className="font-satoshi font-semibold text-lg text-matte-black">
+              {formatOrderId(order.id)}
+            </h3>
+            <DemoBadge variant="small" />
+          </div>
           <p className="text-slate-gray text-sm">
             Placed on {formatDate(order.createdAt)}
           </p>

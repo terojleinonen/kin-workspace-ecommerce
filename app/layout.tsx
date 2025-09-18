@@ -5,7 +5,9 @@ import Footer from './components/Footer'
 import { CartProvider } from './contexts/CartContext'
 import { AuthProvider } from './contexts/AuthContext'
 import { WishlistProvider } from './contexts/WishlistContext'
+import { DemoModeProvider } from './contexts/DemoModeContext'
 import CartSidebar from './components/CartSidebar'
+import DemoModeBanner from './components/DemoModeBanner'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -22,16 +24,19 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.className} bg-soft-white text-slate-gray`}>
-        <AuthProvider>
-          <WishlistProvider>
-            <CartProvider>
-              <Navigation />
-              <main>{children}</main>
-              <Footer />
-              <CartSidebar />
-            </CartProvider>
-          </WishlistProvider>
-        </AuthProvider>
+        <DemoModeProvider>
+          <AuthProvider>
+            <WishlistProvider>
+              <CartProvider>
+                <DemoModeBanner />
+                <Navigation />
+                <main>{children}</main>
+                <Footer />
+                <CartSidebar />
+              </CartProvider>
+            </WishlistProvider>
+          </AuthProvider>
+        </DemoModeProvider>
       </body>
     </html>
   )

@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
 import CartIcon from './CartIcon'
 import UserMenu from './auth/UserMenu'
+import DemoBadge from './DemoBadge'
 
 export default function Navigation() {
   const [isScrolled, setIsScrolled] = useState(false)
@@ -33,9 +34,12 @@ export default function Navigation() {
       <div className="max-w-site mx-auto px-6">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link href="/" className="font-satoshi font-bold text-xl text-matte-black">
-            Kin Workspace
-          </Link>
+          <div className="flex items-center space-x-3">
+            <Link href="/" className="font-satoshi font-bold text-xl text-matte-black">
+              Kin Workspace
+            </Link>
+            <DemoBadge variant="small" />
+          </div>
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
