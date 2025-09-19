@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { Review, ReviewFormData } from '@/lib/types'
+import { Review, ReviewFormData } from '@/app/lib/types'
 
 // Mock database - in production, this would be replaced with actual database calls
 const mockReviews: Review[] = [

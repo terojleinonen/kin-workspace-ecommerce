@@ -25,6 +25,7 @@ export interface PaymentResult {
   error?: string
   receipt?: PaymentReceipt
   processingTime?: number
+  fallbackUsed?: boolean
 }
 
 export interface PaymentReceipt {

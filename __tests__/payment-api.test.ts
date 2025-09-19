@@ -156,8 +156,7 @@ describe('Payment API', () => {
       const mockVerifyToken = require('../app/lib/auth-utils').verifyToken as jest.Mock
       mockVerifyToken.mockReturnValue({ userId: 'user-123' })
 
-      const incompleteData = { ...validPaymentData }
-      delete incompleteData.paymentMethod
+      const incompleteData = { ...validPaymentData, paymentMethod: undefined as any }
 
       const request = new NextRequest('http://localhost:3000/api/payment/process', {
         method: 'POST',

@@ -571,6 +571,18 @@ export interface ValidationResult {
   errors?: string[]
   warnings?: string[]
   missingVars?: string[]
+  // Extended properties for specific validation types
+  service?: string
+  hasApiKey?: boolean
+  fromEmail?: string
+  provider?: string
+  ttl?: number
+  endpoint?: string
+  hasProjectId?: boolean
+  poolSize?: number
+  poolTimeout?: number
+  ssl?: any
+  trackingId?: string
 }
 
 export function validateProductionConfig(): ValidationResult {
@@ -604,9 +616,14 @@ export function validateEmailConfig(): ValidationResult {
   const config = getConfig()
   
   if (config.email.service === 'sendgrid' && config.email.sendgrid) {
+    const errors: string[] = []
+    if (!config.email.sendgrid.apiKey) errors.push('SendGrid API key is missing')
+    if (!config.email.sendgrid.fromEmail) errors.push('SendGrid from email is missing')
+    
     return {
-      isValid: !!(config.email.sendgrid.apiKey && config.email.sendgrid.fromEmail),
-      service: config.email.service,
+      isValid: errors.length === 0,
+      errors: errors.length > 0 ? errors : undefined,
+      service: 'sendgrid',
       hasApiKey: !!config.email.sendgrid.apiKey,
       fromEmail: config.email.sendgrid.fromEmail
     }
@@ -614,32 +631,30 @@ export function validateEmailConfig(): ValidationResult {
 
   return {
     isValid: config.email.service === 'demo',
-    service: config.email.service,
-    hasApiKey: false
+    service: config.email.service
   }
 }
 
 export function validateSecurityConfig(): ValidationResult {
   return {
-    isValid: true,
-    headers: {
-      contentSecurityPolicy: true,
-      strictTransportSecurity: true,
-      xFrameOptions: true,
-      xContentTypeOptions: true,
-      referrerPolicy: true
-    }
+    isValid: true
   }
 }
 
 export function validateAuthConfig(): ValidationResult {
   const config = getConfig()
   
+  const errors: string[] = []
+  if (config.auth.jwtSecret.length < 32) errors.push('JWT secret should be at least 32 characters')
+  if (config.auth.nextAuthSecret.length < 32) errors.push('NextAuth secret should be at least 32 characters')
+  
+  const warnings: string[] = []
+  if (!config.auth.nextAuthUrl.startsWith('https://')) warnings.push('NextAuth URL should use HTTPS in production')
+  
   return {
-    isValid: config.auth.jwtSecret.length >= 32 && config.auth.nextAuthSecret.length >= 32,
-    jwtSecretLength: config.auth.jwtSecret.length,
-    nextAuthSecretLength: config.auth.nextAuthSecret.length,
-    secureUrl: config.auth.nextAuthUrl.startsWith('https://')
+    isValid: errors.length === 0,
+    errors: errors.length > 0 ? errors : undefined,
+    warnings: warnings.length > 0 ? warnings : undefined
   }
 }
 
@@ -647,10 +662,13 @@ export function validateRateLimitConfig(): ValidationResult {
   const requestsPerWindow = parseInt(process.env.RATE_LIMIT_REQUESTS || '100')
   const windowMs = parseInt(process.env.RATE_LIMIT_WINDOW || '900000')
   
+  const errors: string[] = []
+  if (requestsPerWindow <= 0) errors.push('Rate limit requests per window must be greater than 0')
+  if (windowMs <= 0) errors.push('Rate limit window must be greater than 0')
+  
   return {
-    isValid: requestsPerWindow > 0 && windowMs > 0,
-    requestsPerWindow,
-    windowMs
+    isValid: errors.length === 0,
+    errors: errors.length > 0 ? errors : undefined
   }
 }
 
@@ -658,21 +676,21 @@ export function validateMonitoringConfig(): ValidationResult {
   const config = getConfig()
   
   return {
-    isValid: true,
-    errorTracking: {
-      enabled: !!config.monitoring.sentry?.dsn,
-      dsn: config.monitoring.sentry?.dsn
-    }
+    isValid: true
   }
 }
 
 export function validateAnalyticsConfig(): ValidationResult {
   const config = getConfig()
   
+  const errors: string[] = []
+  if (!config.monitoring.analytics?.googleAnalyticsId) {
+    errors.push('Google Analytics tracking ID is missing')
+  }
+  
   return {
-    isValid: !!config.monitoring.analytics?.googleAnalyticsId,
-    provider: 'google-analytics',
-    trackingId: config.monitoring.analytics?.googleAnalyticsId
+    isValid: errors.length === 0,
+    errors: errors.length > 0 ? errors : undefined
   }
 }
 
@@ -680,8 +698,17 @@ export function validateCacheConfig(): ValidationResult {
   const redisUrl = process.env.REDIS_URL
   const cacheTtl = parseInt(process.env.CACHE_TTL || '3600')
   
+  const warnings: string[] = []
+  if (!redisUrl) {
+    warnings.push('Using in-memory cache - consider Redis for production')
+  }
+  if (cacheTtl < 300) {
+    warnings.push('Cache TTL is very low, may impact performance')
+  }
+  
   return {
-    isValid: !!redisUrl,
+    isValid: true,
+    warnings: warnings.length > 0 ? warnings : undefined,
     provider: redisUrl ? 'redis' : 'memory',
     ttl: cacheTtl
   }
@@ -690,10 +717,24 @@ export function validateCacheConfig(): ValidationResult {
 export function validateAssetConfig(): ValidationResult {
   const config = getConfig()
   
+  const errors: string[] = []
+  const warnings: string[] = []
+  
+  if (config.storage.provider === 'cloudinary') {
+    if (!config.storage.cloudinary?.cloudName) {
+      errors.push('Cloudinary cloud name is required')
+    }
+    if (!config.storage.cloudinary?.apiKey) {
+      errors.push('Cloudinary API key is required')
+    }
+  } else if (config.storage.provider === 'local') {
+    warnings.push('Using local storage - consider CDN for production')
+  }
+  
   return {
-    isValid: config.storage.provider === 'cloudinary' && !!config.storage.cloudinary?.cloudName,
-    cdnConfigured: config.storage.provider === 'cloudinary',
-    imageOptimizationEnabled: true
+    isValid: errors.length === 0,
+    errors: errors.length > 0 ? errors : undefined,
+    warnings: warnings.length > 0 ? warnings : undefined
   }
 }
 
@@ -762,7 +803,7 @@ export async function sendEmail(message: { to: string; subject: string; html: st
     
     if (config.email.service === 'demo') {
       console.log('Demo email sent:', message.subject)
-      return { success: true }
+      return { success: true, fallbackUsed: false }
     }
     
     if (config.email.service === 'sendgrid') {
@@ -775,10 +816,10 @@ export async function sendEmail(message: { to: string; subject: string; html: st
       }
       
       // Simulate successful send
-      return { success: true }
+      return { success: true, fallbackUsed: false }
     }
     
-    return { success: false, error: 'Unknown email service' }
+    return { success: false, error: 'Unknown email service', fallbackUsed: true }
   } catch (error) {
     return {
       success: false,

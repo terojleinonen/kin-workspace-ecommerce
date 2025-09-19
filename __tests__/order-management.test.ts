@@ -1,5 +1,15 @@
 import { describe, it, expect, beforeEach, jest } from '@jest/globals'
 
+// Helper function to create mock fetch
+function createMockFetch(responseData: any, ok = true, status = 200) {
+  const mockResponse = {
+    ok,
+    status,
+    json: () => Promise.resolve(responseData)
+  }
+  return jest.fn((...args: any[]) => Promise.resolve(mockResponse))
+}
+
 // Mock data for testing
 const mockOrders = [
   {
@@ -93,19 +103,16 @@ const mockOrders = [
 describe('Order Management', () => {
   describe('Order History API', () => {
     it('should fetch user orders with default pagination', async () => {
-      const mockFetch = jest.fn().mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve({
-          orders: mockOrders,
-          pagination: {
-            page: 1,
-            limit: 10,
-            total: 2,
-            totalPages: 1
-          }
-        })
+      const mockFetch = createMockFetch({
+        orders: mockOrders,
+        pagination: {
+          page: 1,
+          limit: 10,
+          total: 2,
+          totalPages: 1
+        }
       })
-      global.fetch = mockFetch
+      global.fetch = mockFetch as any
 
       const response = await fetch('/api/orders?page=1&limit=10')
       const data = await response.json()
@@ -118,19 +125,16 @@ describe('Order Management', () => {
     it('should filter orders by status', async () => {
       const deliveredOrders = mockOrders.filter(order => order.status === 'DELIVERED')
       
-      const mockFetch = jest.fn().mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve({
-          orders: deliveredOrders,
-          pagination: {
-            page: 1,
-            limit: 10,
-            total: 1,
-            totalPages: 1
-          }
-        })
+      const mockFetch = createMockFetch({
+        orders: deliveredOrders,
+        pagination: {
+          page: 1,
+          limit: 10,
+          total: 1,
+          totalPages: 1
+        }
       })
-      global.fetch = mockFetch
+      global.fetch = mockFetch as any
 
       const response = await fetch('/api/orders?status=DELIVERED')
       const data = await response.json()
@@ -142,19 +146,16 @@ describe('Order Management', () => {
     it('should search orders by order ID', async () => {
       const searchResults = mockOrders.filter(order => order.id.includes('order-1'))
       
-      const mockFetch = jest.fn().mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve({
-          orders: searchResults,
-          pagination: {
-            page: 1,
-            limit: 10,
-            total: 1,
-            totalPages: 1
-          }
-        })
+      const mockFetch = createMockFetch({
+        orders: searchResults,
+        pagination: {
+          page: 1,
+          limit: 10,
+          total: 1,
+          totalPages: 1
+        }
       })
-      global.fetch = mockFetch
+      global.fetch = mockFetch as any
 
       const response = await fetch('/api/orders?search=order-1')
       const data = await response.json()
@@ -167,19 +168,16 @@ describe('Order Management', () => {
       const startDate = '2024-01-01'
       const endDate = '2024-01-31'
       
-      const mockFetch = jest.fn().mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve({
-          orders: mockOrders,
-          pagination: {
-            page: 1,
-            limit: 10,
-            total: 2,
-            totalPages: 1
-          }
-        })
+      const mockFetch = createMockFetch({
+        orders: mockOrders,
+        pagination: {
+          page: 1,
+          limit: 10,
+          total: 2,
+          totalPages: 1
+        }
       })
-      global.fetch = mockFetch
+      global.fetch = mockFetch as any
 
       const response = await fetch(`/api/orders?startDate=${startDate}&endDate=${endDate}`)
       const data = await response.json()
@@ -191,11 +189,8 @@ describe('Order Management', () => {
 
   describe('Order Details API', () => {
     it('should fetch order details by ID', async () => {
-      const mockFetch = jest.fn().mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve(mockOrders[0])
-      })
-      global.fetch = mockFetch
+      const mockFetch = createMockFetch(mockOrders[0])
+      global.fetch = mockFetch as any
 
       const response = await fetch('/api/orders/order-1')
       const data = await response.json()
@@ -206,12 +201,8 @@ describe('Order Management', () => {
     })
 
     it('should return 404 for non-existent order', async () => {
-      const mockFetch = jest.fn().mockResolvedValue({
-        ok: false,
-        status: 404,
-        json: () => Promise.resolve({ error: 'Order not found' })
-      })
-      global.fetch = mockFetch
+      const mockFetch = createMockFetch({ error: 'Order not found' }, false, 404)
+      global.fetch = mockFetch as any
 
       const response = await fetch('/api/orders/non-existent')
       
@@ -224,11 +215,8 @@ describe('Order Management', () => {
     it('should update order status', async () => {
       const updatedOrder = { ...mockOrders[1], status: 'SHIPPED' }
       
-      const mockFetch = jest.fn().mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve(updatedOrder)
-      })
-      global.fetch = mockFetch
+      const mockFetch = createMockFetch(updatedOrder)
+      global.fetch = mockFetch as any
 
       const response = await fetch('/api/orders/order-2/status', {
         method: 'PATCH',
@@ -241,12 +229,8 @@ describe('Order Management', () => {
     })
 
     it('should validate order status transitions', async () => {
-      const mockFetch = jest.fn().mockResolvedValue({
-        ok: false,
-        status: 400,
-        json: () => Promise.resolve({ error: 'Invalid status transition' })
-      })
-      global.fetch = mockFetch
+      const mockFetch = createMockFetch({ error: 'Invalid status transition' }, false, 400)
+      global.fetch = mockFetch as any
 
       const response = await fetch('/api/orders/order-1/status', {
         method: 'PATCH',

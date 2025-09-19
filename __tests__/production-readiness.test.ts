@@ -354,7 +354,7 @@ describe('Production Readiness Tests', () => {
   describe('Monitoring and Observability', () => {
     test('should validate error tracking configuration', () => {
       process.env.SENTRY_DSN = 'https://test@sentry.io/123456'
-      process.env.NODE_ENV = 'production'
+      Object.defineProperty(process.env, 'NODE_ENV', { value: 'production', writable: true })
 
       const { validateMonitoringConfig } = require('../app/lib/config')
       const validation = validateMonitoringConfig()

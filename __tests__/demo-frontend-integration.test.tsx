@@ -467,10 +467,13 @@ describe('Demo Frontend Integration Tests', () => {
 
   describe('CMS Sync Dashboard Component', () => {
     const mockStatus = {
-      connected: true,
-      mode: 'demo' as const,
-      lastSync: new Date('2024-01-15T10:30:00Z'),
-      status: 'healthy' as const
+      isHealthy: true,
+      lastSuccessfulSync: new Date('2024-01-15T10:30:00Z'),
+      lastAttemptedSync: new Date('2024-01-15T10:30:00Z'),
+      errorCount: 0,
+      lastError: null,
+      daysSinceLastSync: 0,
+      circuitBreakerOpen: false
     }
 
     const mockHistory = [

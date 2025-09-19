@@ -1,4 +1,5 @@
-import { ProductSyncService, SyncOptions, SyncResult } from '../app/lib/product-sync'
+import { ProductSyncService, SyncOptions } from '../app/lib/product-sync'
+import { SyncResult } from '../app/lib/cms-client'
 import { CMSClient, CMSProduct } from '../app/lib/cms-client'
 import { Product } from '../app/lib/types'
 

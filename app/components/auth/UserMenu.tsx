@@ -47,7 +47,7 @@ export default function UserMenu() {
         className="flex items-center space-x-2 text-slate-gray hover:text-matte-black transition-colors"
       >
         <UserIcon className="h-5 w-5" />
-        <span className="hidden md:block">{user.firstName}</span>
+        <span className="hidden md:block">{user.name.split(' ')[0]}</span>
         <ChevronDownIcon className="h-4 w-4" />
       </button>
 
@@ -55,7 +55,7 @@ export default function UserMenu() {
         <div className="absolute right-0 mt-2 w-48 bg-soft-white border border-warm-beige rounded-lg shadow-lg z-50">
           <div className="py-2">
             <div className="px-4 py-2 border-b border-warm-beige">
-              <p className="font-medium text-matte-black">{user.firstName} {user.lastName}</p>
+              <p className="font-medium text-matte-black">{user.name}</p>
               <p className="text-sm text-slate-gray">{user.email}</p>
             </div>
             

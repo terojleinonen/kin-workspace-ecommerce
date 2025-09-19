@@ -18,7 +18,8 @@ export async function generateDemoUsers(count: number = 3) {
     id: 'demo-user-1',
     email: 'demo@kinworkspace.com',
     name: 'Demo Customer',
-    password: 'hashed-demo-password',
+    passwordHash: 'hashed-demo-password',
+    role: 'CUSTOMER' as const,
     createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
   })
 
@@ -35,7 +36,8 @@ export async function generateDemoUsers(count: number = 3) {
       id: `demo-user-${i + 1}`,
       email: `${firstName}.demo@kinworkspace.com`,
       name: name,
-      password: 'hashed-demo-password',
+      passwordHash: 'hashed-demo-password',
+      role: 'CUSTOMER' as const,
       createdAt: new Date(Date.now() - Math.random() * 60 * 24 * 60 * 60 * 1000),
     })
   }
@@ -167,9 +169,10 @@ export async function generateDemoReviews(userIds: string[], count: number = 8) 
       productId: productId,
       rating: template.rating,
       title: template.title,
-      content: template.content,
+      comment: template.content,
       verified: Math.random() > 0.3, // 70% verified
       helpful: Math.floor(Math.random() * 15),
+      photos: [],
       createdAt: new Date(Date.now() - createdDaysAgo * 24 * 60 * 60 * 1000),
     })
   }
@@ -222,7 +225,8 @@ export async function seedDemoData(options: DemoDataOptions = {}) {
         id: 'demo-admin',
         email: 'admin@kinworkspace.com',
         name: 'Demo Admin',
-        password: 'hashed-admin-password',
+        passwordHash: 'hashed-admin-password',
+        role: 'ADMIN' as any,
         createdAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000),
       })
     }
@@ -245,7 +249,9 @@ export async function seedDemoData(options: DemoDataOptions = {}) {
         data: {
           id: order.id,
           userId: order.userId,
-          status: order.status,
+          status: order.status as any,
+          paymentMethod: 'demo_card',
+          paymentStatus: 'PAID' as any,
           total: order.total,
           subtotal: order.subtotal,
           tax: order.tax,

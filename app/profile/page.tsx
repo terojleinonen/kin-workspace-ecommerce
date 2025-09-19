@@ -24,9 +24,10 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (user) {
+      const nameParts = user.name.split(' ')
       setFormData({
-        firstName: user.firstName,
-        lastName: user.lastName,
+        firstName: nameParts[0] || '',
+        lastName: nameParts.slice(1).join(' ') || '',
         email: user.email
       })
     }

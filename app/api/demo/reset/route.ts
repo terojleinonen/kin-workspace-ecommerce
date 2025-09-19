@@ -17,33 +17,47 @@ export async function POST(request: NextRequest) {
 
     // Clear existing demo data
     await prisma.$transaction(async (tx) => {
-      // Delete demo orders and related data
-      await tx.orderItem.deleteMany({
+      // First, find demo users
+      const demoUsers = await tx.user.findMany({
         where: {
-          order: {
-            id: {
-              startsWith: 'DEMO-'
-            }
+          email: {
+            startsWith: 'demo'
           }
-        }
+        },
+        select: { id: true }
       })
       
-      await tx.order.deleteMany({
-        where: {
-          id: {
-            startsWith: 'DEMO-'
-          }
-        }
-      })
+      const demoUserIds = demoUsers.map(user => user.id)
 
-      // Delete demo reviews
-      await tx.review.deleteMany({
-        where: {
-          userId: {
-            startsWith: 'demo-user'
+      // Delete demo orders and related data using userId
+      if (demoUserIds.length > 0) {
+        await tx.orderItem.deleteMany({
+          where: {
+            order: {
+              userId: {
+                in: demoUserIds
+              }
+            }
           }
-        }
-      })
+        })
+        
+        await tx.order.deleteMany({
+          where: {
+            userId: {
+              in: demoUserIds
+            }
+          }
+        })
+
+        // Delete demo reviews
+        await tx.review.deleteMany({
+          where: {
+            userId: {
+              in: demoUserIds
+            }
+          }
+        })
+      }
 
       // Delete demo users (keep admin)
       await tx.user.deleteMany({
@@ -51,8 +65,8 @@ export async function POST(request: NextRequest) {
           email: {
             startsWith: 'demo'
           },
-          email: {
-            not: 'admin@kinworkspace.com'
+          NOT: {
+            email: 'admin@kinworkspace.com'
           }
         }
       })
@@ -81,21 +95,24 @@ async function generateDemoData() {
       id: 'demo-user-1',
       email: 'demo@kinworkspace.com',
       name: 'Demo Customer',
-      password: 'hashed-demo-password', // In real app, this would be properly hashed
+      passwordHash: 'hashed-demo-password', // In real app, this would be properly hashed
+      role: 'CUSTOMER' as const,
       createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // 30 days ago
     },
     {
       id: 'demo-user-2', 
       email: 'sarah.demo@kinworkspace.com',
       name: 'Sarah Wilson',
-      password: 'hashed-demo-password',
+      passwordHash: 'hashed-demo-password',
+      role: 'CUSTOMER' as const,
       createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000), // 15 days ago
     },
     {
       id: 'demo-admin',
       email: 'admin@kinworkspace.com',
       name: 'Demo Admin',
-      password: 'hashed-admin-password',
+      passwordHash: 'hashed-admin-password',
+      role: 'ADMIN' as const,
       createdAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000), // 60 days ago
     }
   ]
@@ -113,12 +130,14 @@ async function generateDemoData() {
     {
       id: generateDemoOrderId(),
       userId: 'demo-user-1',
-      status: 'delivered',
+      status: 'DELIVERED' as const,
       total: 299.99,
       subtotal: 299.99,
       tax: 0,
       shipping: 0,
-      billingAddress: JSON.stringify({
+      paymentMethod: 'demo_card',
+      paymentStatus: 'PAID' as const,
+      billingAddress: {
         firstName: 'Demo',
         lastName: 'Customer', 
         email: 'demo@kinworkspace.com',
@@ -128,8 +147,8 @@ async function generateDemoData() {
         state: 'CA',
         zipCode: '90210',
         country: 'US'
-      }),
-      shippingAddress: JSON.stringify({
+      },
+      shippingAddress: {
         firstName: 'Demo',
         lastName: 'Customer',
         address: '123 Demo Street',
@@ -137,19 +156,21 @@ async function generateDemoData() {
         state: 'CA',
         zipCode: '90210',
         country: 'US'
-      }),
+      },
       createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7 days ago
       updatedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
     },
     {
       id: generateDemoOrderId(),
       userId: 'demo-user-1',
-      status: 'shipped',
+      status: 'SHIPPED' as const,
       total: 149.99,
       subtotal: 149.99,
       tax: 0,
       shipping: 0,
-      billingAddress: JSON.stringify({
+      paymentMethod: 'demo_card',
+      paymentStatus: 'PAID' as const,
+      billingAddress: {
         firstName: 'Demo',
         lastName: 'Customer',
         email: 'demo@kinworkspace.com',
@@ -159,8 +180,8 @@ async function generateDemoData() {
         state: 'CA',
         zipCode: '90210',
         country: 'US'
-      }),
-      shippingAddress: JSON.stringify({
+      },
+      shippingAddress: {
         firstName: 'Demo',
         lastName: 'Customer',
         address: '123 Demo Street',
@@ -168,19 +189,21 @@ async function generateDemoData() {
         state: 'CA',
         zipCode: '90210',
         country: 'US'
-      }),
+      },
       createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
       updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), // 1 day ago
     },
     {
       id: generateDemoOrderId(),
       userId: 'demo-user-2',
-      status: 'processing',
+      status: 'PROCESSING' as const,
       total: 89.99,
       subtotal: 89.99,
       tax: 0,
       shipping: 0,
-      billingAddress: JSON.stringify({
+      paymentMethod: 'demo_card',
+      paymentStatus: 'PAID' as const,
+      billingAddress: {
         firstName: 'Sarah',
         lastName: 'Wilson',
         email: 'sarah.demo@kinworkspace.com',
@@ -190,8 +213,8 @@ async function generateDemoData() {
         state: 'NY',
         zipCode: '10001',
         country: 'US'
-      }),
-      shippingAddress: JSON.stringify({
+      },
+      shippingAddress: {
         firstName: 'Sarah',
         lastName: 'Wilson',
         address: '456 Demo Avenue',
@@ -199,7 +222,7 @@ async function generateDemoData() {
         state: 'NY',
         zipCode: '10001',
         country: 'US'
-      }),
+      },
       createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), // 1 day ago
       updatedAt: new Date(Date.now() - 12 * 60 * 60 * 1000), // 12 hours ago
     }
@@ -219,9 +242,10 @@ async function generateDemoData() {
       productId: 'ergonomic-desk-chair',
       rating: 5,
       title: 'Excellent chair for long work sessions',
-      content: 'This chair has completely transformed my home office setup. The ergonomic design provides excellent support during long coding sessions. Highly recommended!',
+      comment: 'This chair has completely transformed my home office setup. The ergonomic design provides excellent support during long coding sessions. Highly recommended!',
       verified: true,
       helpful: 12,
+      photos: [],
       createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000), // 10 days ago
     },
     {
@@ -230,9 +254,10 @@ async function generateDemoData() {
       productId: 'standing-desk-converter',
       rating: 4,
       title: 'Great for switching between sitting and standing',
-      content: 'Easy to adjust and sturdy construction. The height adjustment is smooth and it holds my dual monitor setup perfectly. Only wish it was slightly wider.',
+      comment: 'Easy to adjust and sturdy construction. The height adjustment is smooth and it holds my dual monitor setup perfectly. Only wish it was slightly wider.',
       verified: true,
       helpful: 8,
+      photos: [],
       createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
     },
     {
@@ -241,9 +266,10 @@ async function generateDemoData() {
       productId: 'desk-organizer-set',
       rating: 5,
       title: 'Perfect for keeping workspace tidy',
-      content: 'These organizers are beautifully crafted and fit perfectly on my desk. The bamboo material matches my other workspace accessories perfectly.',
+      comment: 'These organizers are beautifully crafted and fit perfectly on my desk. The bamboo material matches my other workspace accessories perfectly.',
       verified: true,
       helpful: 6,
+      photos: [],
       createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
     }
   ]

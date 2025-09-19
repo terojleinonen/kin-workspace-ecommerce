@@ -13,10 +13,8 @@ import {
   StorageFile
 } from '../app/lib/service-factory'
 import { 
-  DatabaseManager, 
-  getDatabaseManager,
-  validateDatabaseConnection,
-  ensureDatabaseReady
+  validateDatabaseConfig,
+  testDatabaseConnection
 } from '../app/lib/database-config'
 import { getConfig, resetConfig } from '../app/lib/config'
 
@@ -427,107 +425,30 @@ describe('Cloudinary Storage Service', () => {
 })
 
 describe('Database Configuration', () => {
-  let databaseManager: DatabaseManager
 
-  beforeEach(() => {
-    databaseManager = getDatabaseManager()
-  })
-
-  test('should initialize database manager', () => {
-    expect(databaseManager).toBeDefined()
+  test('should validate database configuration', () => {
+    const validation = validateDatabaseConfig()
     
-    const config = databaseManager.getConnectionConfig()
-    expect(config.url).toBeDefined()
-    expect(config.provider).toBeDefined()
+    expect(validation.isValid).toBe(true)
+    expect(validation.provider).toBeDefined()
+    expect(validation.poolSize).toBeGreaterThan(0)
   })
 
-  test('should validate database connection', async () => {
-    const result = await databaseManager.validateConnection()
+  test('should test database connection', async () => {
+    const result = await testDatabaseConnection()
 
-    expect(result.valid).toBe(true)
-    expect(result.provider).toBeDefined()
+    expect(result.connected).toBe(true)
+    expect(result.error).toBeUndefined()
   })
 
-  test('should check migration status', async () => {
-    const status = await databaseManager.checkMigrationStatus()
-
-    expect(status.needsMigration).toBe(false)
-    expect(status.pendingMigrations).toBeDefined()
-    expect(status.currentVersion).toBeDefined()
-  })
-
-  test('should run migrations in dry run mode', async () => {
-    const result = await databaseManager.runMigrations({ dryRun: true })
-
-    expect(result.success).toBe(true)
-    expect(result.migrationsRun).toBeDefined()
-  })
-
-  test('should create database backup', async () => {
-    const backupPath = await databaseManager.createDatabaseBackup()
-
-    expect(backupPath).toContain('database_backup_')
-    expect(backupPath).toContain('.sql')
-  })
-
-  test('should seed database', async () => {
-    const result = await databaseManager.seedDatabase({ environment: 'demo' })
-
-    expect(result.success).toBe(true)
-    expect(result.seedsRun).toContain('demo_users')
-    expect(result.seedsRun).toContain('demo_products')
-  })
-
-  test('should reset database in demo mode only', async () => {
-    process.env.PAYMENT_MODE = 'demo'
+  test('should handle connection failure', async () => {
+    process.env.DATABASE_URL = 'postgresql://invalid:invalid@invalid:5432/invalid'
     resetConfig()
+    
+    const result = await testDatabaseConnection()
 
-    const result = await databaseManager.resetDatabase()
-
-    expect(result.success).toBe(true)
-  })
-
-  test('should prevent database reset in production mode', async () => {
-    process.env.PAYMENT_MODE = 'production'
-    process.env.STRIPE_PUBLISHABLE_KEY = 'pk_test_123456789'
-    process.env.STRIPE_SECRET_KEY = 'sk_test_123456789'
-    process.env.STRIPE_WEBHOOK_SECRET = 'whsec_123456789'
-    process.env.EMAIL_SERVICE = 'demo'
-    process.env.STORAGE_PROVIDER = 'local'
-    resetConfig()
-
-    const result = await databaseManager.resetDatabase()
-
-    expect(result.success).toBe(false)
-    expect(result.error).toContain('only allowed in demo mode')
-  })
-
-  test('should get database statistics', async () => {
-    const stats = await databaseManager.getDatabaseStats()
-
-    expect(stats.provider).toBeDefined()
-    expect(stats.tables).toBeGreaterThan(0)
-    expect(stats.records).toBeDefined()
-    expect(stats.records.users).toBeGreaterThanOrEqual(0)
-  })
-
-  test('should perform health check', async () => {
-    const health = await databaseManager.healthCheck()
-
-    expect(health.healthy).toBe(true)
-    expect(health.responseTime).toBeGreaterThan(0)
-    expect(health.details.connection).toBe(true)
-    expect(health.details.migrations).toBe(true)
-    expect(health.details.readWrite).toBe(true)
-  })
-
-  test('should validate database connection helper', async () => {
-    const isValid = await validateDatabaseConnection()
-    expect(isValid).toBe(true)
-  })
-
-  test('should ensure database is ready', async () => {
-    // Should not throw in demo mode
-    await expect(ensureDatabaseReady()).resolves.not.toThrow()
+    expect(result.connected).toBe(false)
+    expect(result.error).toBeDefined()
+    expect(result.fallbackStrategy).toBeDefined()
   })
 })

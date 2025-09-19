@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { PrismaClient } from '@prisma/client'
 import { verifyAuth } from '@/app/lib/auth-utils'
-import { OrderFilters, OrdersResponse } from '@/app/lib/types'
+import { OrderFilters, OrdersResponse, OrderStatus, PaymentStatus } from '@/app/lib/types'
 
 const prisma = new PrismaClient()
 
@@ -104,6 +104,12 @@ export async function GET(request: NextRequest) {
     // Transform the data to match our interface
     const transformedOrders = orders.map(order => ({
       ...order,
+      status: order.status as OrderStatus,
+      paymentStatus: order.paymentStatus as PaymentStatus,
+      shippingAddress: order.shippingAddress as any,
+      billingAddress: order.billingAddress as any,
+      createdAt: order.createdAt.toISOString(),
+      updatedAt: order.updatedAt.toISOString(),
       total: Number(order.total),
       subtotal: Number(order.subtotal),
       tax: Number(order.tax),
@@ -111,6 +117,7 @@ export async function GET(request: NextRequest) {
       items: order.items.map(item => ({
         ...item,
         price: Number(item.price),
+        variant: item.variant as any,
         product: {
           ...item.product,
           image: item.product.media[0]?.media?.filename 

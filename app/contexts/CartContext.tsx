@@ -21,10 +21,10 @@ const cartReducer = (state: Cart, action: CartAction): Cart => {
   switch (action.type) {
     case 'ADD_ITEM': {
       const { product, quantity, variant } = action.payload
-      const itemId = generateCartItemId(product.id, variant)
+      const itemId = generateCartItemId(product, variant)
       
       const existingItemIndex = state.items.findIndex(item => 
-        generateCartItemId(item.product.id, item.variant) === itemId
+        generateCartItemId(item.product, item.variant) === itemId
       )
 
       let newItems: CartItem[]

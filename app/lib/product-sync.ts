@@ -164,7 +164,8 @@ export class ProductSyncService {
           where: { slug: cmsProduct.slug },
           create: {
             ...transformedProduct,
-            id: undefined // Let database generate ID
+            id: undefined, // Let database generate ID
+            createdBy: 'system' // Required field for product creation
           },
           update: transformedProduct
         })

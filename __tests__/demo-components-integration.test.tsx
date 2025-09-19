@@ -194,13 +194,13 @@ describe('Demo Components Integration Tests', () => {
 
   describe('CMSSyncDashboard Component', () => {
     const mockStatus = {
-      connected: true,
-      mode: 'demo' as const,
-      lastSync: new Date().toISOString(),
-      status: 'healthy' as const,
-      fallbackActive: false,
-      productsCount: 12,
-      lastError: null
+      isHealthy: true,
+      lastSuccessfulSync: new Date(),
+      lastAttemptedSync: new Date(),
+      errorCount: 0,
+      lastError: null,
+      daysSinceLastSync: 0,
+      circuitBreakerOpen: false
     }
 
     const mockHistory = [

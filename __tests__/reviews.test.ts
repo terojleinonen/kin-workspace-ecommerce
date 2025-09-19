@@ -1,4 +1,4 @@
-import { Review, ReviewFormData, ReviewSummary } from '@/lib/types'
+import { Review, ReviewFormData, ReviewSummary } from '@/app/lib/types'
 
 // Mock review data for testing
 const mockReview: Review = {

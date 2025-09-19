@@ -14,8 +14,8 @@ export async function GET() {
         name: category.name,
         slug: category.slug,
         description: category.description,
-        count: category.productCount || 0,
-        inStockCount: category.productCount || 0, // Simplified for now
+        count: 0, // TODO: Calculate actual product count
+        inStockCount: 0, // TODO: Calculate actual in-stock count
         id: category.id,
         parentId: category.parentId,
         sortOrder: category.sortOrder

@@ -51,12 +51,12 @@ export class DemoEmailService extends EmailService {
 
   async sendEmail(message: EmailMessage): Promise<EmailResult> {
     // Simulate processing delay
-    if (this.config.simulateDelay > 0) {
-      await new Promise(resolve => setTimeout(resolve, this.config.simulateDelay))
+    if (this.config?.simulateDelay && this.config.simulateDelay > 0) {
+      await new Promise(resolve => setTimeout(resolve, this.config!.simulateDelay))
     }
 
     // Log email for debugging
-    if (this.config.logEmails) {
+    if (this.config?.logEmails) {
       console.log('📧 Demo Email Sent:', {
         to: message.to,
         subject: message.subject,
@@ -69,7 +69,7 @@ export class DemoEmailService extends EmailService {
     return {
       success: true,
       messageId: `demo_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      deliveryTime: this.config.simulateDelay
+      deliveryTime: this.config?.simulateDelay || 0
     }
   }
 
@@ -259,7 +259,7 @@ export class SendGridEmailService extends EmailService {
     super()
     this.config = config!
     
-    if (!this.config.apiKey) {
+    if (!this.config?.apiKey) {
       throw new Error('SendGrid API key is required for production email service')
     }
   }
@@ -284,8 +284,8 @@ export class SendGridEmailService extends EmailService {
           subject: message.subject
         }],
         from: {
-          email: message.from || this.config.fromEmail,
-          name: this.config.fromName || 'Kin Workspace'
+          email: message.from || this.config?.fromEmail || 'noreply@kinworkspace.com',
+          name: this.config?.fromName || 'Kin Workspace'
         },
         content: [
           {
@@ -363,7 +363,7 @@ export class SendGridEmailService extends EmailService {
 
   // Private helper methods
   private validateSendGridCredentials(): boolean {
-    return !!(this.config.apiKey && this.config.fromEmail)
+    return !!(this.config?.apiKey && this.config?.fromEmail)
   }
 
   private async simulateSendGridRequest(payload: any): Promise<{ success: boolean; messageId?: string; processingTime?: number; error?: string }> {
@@ -664,11 +664,11 @@ Manage Account: ${getConfig().siteUrl}/profile
 
   // Production-specific methods
   getSendGridApiKey(): string {
-    return this.config.apiKey
+    return this.config?.apiKey || ''
   }
 
   getFromEmail(): string {
-    return this.config.fromEmail
+    return this.config?.fromEmail || 'noreply@kinworkspace.com'
   }
 
   // Method to handle SendGrid webhooks (for production)
@@ -750,7 +750,7 @@ export class LocalStorageService extends StorageService {
     // TODO: Implement local file storage
     // For now, return a mock URL
     const filename = `${Date.now()}_${file.filename}`
-    const url = `${this.config.publicPath}/${folder}/${filename}`
+    const url = `${this.config?.publicPath || '/uploads'}/${folder}/${filename}`
     
     return {
       success: true,
@@ -765,7 +765,7 @@ export class LocalStorageService extends StorageService {
   }
 
   getFileUrl(publicId: string): string {
-    return `${this.config.publicPath}/${publicId}`
+    return `${this.config?.publicPath || '/uploads'}/${publicId}`
   }
 }
 
@@ -777,7 +777,7 @@ export class CloudinaryStorageService extends StorageService {
     super()
     this.config = config!
     
-    if (!this.config.cloudName || !this.config.apiKey || !this.config.apiSecret) {
+    if (!this.config?.cloudName || !this.config?.apiKey || !this.config?.apiSecret) {
       throw new Error('Cloudinary credentials are required for production storage service')
     }
   }
@@ -834,7 +834,7 @@ export class CloudinaryStorageService extends StorageService {
 
   getFileUrl(publicId: string, transformations?: Record<string, any>): string {
     // Generate Cloudinary URL with optional transformations
-    const baseUrl = `https://res.cloudinary.com/${this.config.cloudName}/image/upload`
+    const baseUrl = `https://res.cloudinary.com/${this.config?.cloudName}/image/upload`
     
     if (transformations) {
       const transformString = this.buildTransformationString(transformations)
@@ -846,7 +846,7 @@ export class CloudinaryStorageService extends StorageService {
 
   // Private helper methods
   private validateCloudinaryCredentials(): boolean {
-    return !!(this.config.cloudName && this.config.apiKey && this.config.apiSecret)
+    return !!(this.config?.cloudName && this.config?.apiKey && this.config?.apiSecret)
   }
 
   private async simulateCloudinaryUpload(file: StorageFile, folder: string): Promise<any> {
@@ -872,8 +872,8 @@ export class CloudinaryStorageService extends StorageService {
     return {
       success: true,
       public_id: publicId,
-      secure_url: `https://res.cloudinary.com/${this.config.cloudName}/image/upload/${publicId}`,
-      url: `http://res.cloudinary.com/${this.config.cloudName}/image/upload/${publicId}`,
+      secure_url: `https://res.cloudinary.com/${this.config?.cloudName}/image/upload/${publicId}`,
+      url: `http://res.cloudinary.com/${this.config?.cloudName}/image/upload/${publicId}`,
       format: this.getFileExtension(file.filename),
       resource_type: this.getResourceType(file.mimetype),
       bytes: file.size,
@@ -920,7 +920,7 @@ export class CloudinaryStorageService extends StorageService {
 
   // Production-specific methods
   getCloudName(): string {
-    return this.config.cloudName
+    return this.config?.cloudName || ''
   }
 
   // Generate optimized image URLs for different use cases
@@ -1023,7 +1023,7 @@ export class CloudinaryStorageService extends StorageService {
     const timestamp = Math.floor(Date.now() / 1000)
     
     return {
-      url: `https://api.cloudinary.com/v1_1/${this.config.cloudName}/image/upload`,
+      url: `https://api.cloudinary.com/v1_1/${this.config?.cloudName}/image/upload`,
       signature: `demo_signature_${timestamp}`, // Would be actual signature in production
       timestamp
     }
@@ -1218,9 +1218,9 @@ export async function checkServiceHealth(): Promise<{
 }
 
 // Service factory functions for production readiness tests
-export function getPaymentService(): PaymentService {
+export function getProductionPaymentService(): PaymentService {
   const config = getConfig()
-  return PaymentServiceFactory.create(config.payment)
+  return ServiceFactory.getPaymentService()
 }
 
 export function getCMSService(): any {

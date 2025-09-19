@@ -26,14 +26,18 @@ describe('Checkout Utilities', () => {
   const validBillingInfo: BillingInfo = {
     firstName: 'John',
     lastName: 'Doe',
+    email: 'john@example.com',
+    phone: '555-0123',
     address: '123 Main St',
     city: 'New York',
     state: 'NY',
     zipCode: '10001',
-    country: 'US'
+    country: 'US',
+    sameAsShipping: false
   }
 
   const validPaymentInfo: PaymentInfo = {
+    type: 'card',
     cardNumber: '4111111111111111',
     expiryDate: '12/25',
     cvv: '123',

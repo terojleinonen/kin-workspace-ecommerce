@@ -72,7 +72,7 @@ describe('Demo Data Management', () => {
         expect(review.rating).toBeGreaterThanOrEqual(1)
         expect(review.rating).toBeLessThanOrEqual(5)
         expect(review.title).toBeTruthy()
-        expect(review.content).toBeTruthy()
+        expect(review.comment).toBeTruthy()
         expect(typeof review.verified).toBe('boolean')
         expect(review.helpful).toBeGreaterThanOrEqual(0)
       })

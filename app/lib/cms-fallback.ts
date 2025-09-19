@@ -224,12 +224,42 @@ export class CMSFallbackService {
       const products = await db.product.findMany({
         where: whereClause,
         take: filters?.limit,
-        orderBy: { createdAt: 'desc' }
+        orderBy: { createdAt: 'desc' },
+        include: {
+          categories: {
+            include: {
+              category: true
+            }
+          },
+          media: {
+            include: {
+              media: true
+            },
+            orderBy: {
+              sortOrder: 'asc'
+            }
+          }
+        }
       })
 
+      const transformedProducts: Product[] = products.map(product => ({
+        id: product.id,
+        name: product.name,
+        price: Number(product.price),
+        image: product.media[0]?.media?.filename 
+          ? `/uploads/${product.media[0].media.filename}`
+          : '/images/placeholder.jpg',
+        category: product.categories[0]?.category?.name || 'Uncategorized',
+        slug: product.slug,
+        description: product.description || undefined,
+        images: product.media.map(m => `/uploads/${m.media.filename}`),
+        inStock: product.inventoryQuantity > 0,
+        rating: 0 // Default rating
+      }))
+
       return {
-        products: products as Product[],
-        source: products.length > 0 ? 'local' : 'none',
+        products: transformedProducts,
+        source: transformedProducts.length > 0 ? 'local' : 'none',
         isStale: true,
         error,
         circuitBreakerOpen: this.circuitBreaker.isOpen
@@ -264,12 +294,42 @@ export class CMSFallbackService {
   private async getProductFromLocal(slug: string, error?: string): Promise<ProductResult> {
     try {
       const product = await db.product.findUnique({
-        where: { slug }
+        where: { slug },
+        include: {
+          categories: {
+            include: {
+              category: true
+            }
+          },
+          media: {
+            include: {
+              media: true
+            },
+            orderBy: {
+              sortOrder: 'asc'
+            }
+          }
+        }
       })
 
+      const transformedProduct: Product | null = product ? {
+        id: product.id,
+        name: product.name,
+        price: Number(product.price),
+        image: product.media[0]?.media?.filename 
+          ? `/uploads/${product.media[0].media.filename}`
+          : '/images/placeholder.jpg',
+        category: product.categories[0]?.category?.name || 'Uncategorized',
+        slug: product.slug,
+        description: product.description || undefined,
+        images: product.media.map(m => `/uploads/${m.media.filename}`),
+        inStock: product.inventoryQuantity > 0,
+        rating: 0 // Default rating
+      } : null
+
       return {
-        product: product as Product | null,
-        source: product ? 'local' : 'none',
+        product: transformedProduct,
+        source: transformedProduct ? 'local' : 'none',
         isStale: true,
         error
       }
@@ -504,5 +564,38 @@ export class CMSFallbackService {
    */
   getCircuitBreakerStatus(): CircuitBreakerState {
     return { ...this.circuitBreaker }
+  }
+
+  /**
+   * Get sync history
+   */
+  async getSyncHistory(limit: number = 20): Promise<Array<{
+    id: string
+    timestamp: Date
+    success: boolean
+    error?: string
+    productsUpdated?: number
+  }>> {
+    try {
+      // For now, return mock data since we don't have a sync history table
+      // In a real implementation, you would query a sync_history table
+      return [
+        {
+          id: '1',
+          timestamp: new Date(),
+          success: true,
+          productsUpdated: 25
+        },
+        {
+          id: '2',
+          timestamp: new Date(Date.now() - 3600000), // 1 hour ago
+          success: false,
+          error: 'CMS connection timeout'
+        }
+      ].slice(0, limit)
+    } catch (error) {
+      console.error('Error getting sync history:', error)
+      return []
+    }
   }
 }

@@ -58,8 +58,9 @@ export interface CartContextType {
 export interface User {
   id: string
   email: string
-  firstName: string
-  lastName: string
+  name: string
+  role?: string
+  isActive?: boolean
   createdAt: string
   updatedAt: string
 }

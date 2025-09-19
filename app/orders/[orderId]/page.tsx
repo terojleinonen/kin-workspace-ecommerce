@@ -14,7 +14,7 @@ import OrderSummary from '@/app/components/orders/OrderSummary'
 import OrderActions from '@/app/components/orders/OrderActions'
 
 interface OrderDetailsPageProps {
-  params: { orderId: string }
+  params: Promise<{ orderId: string }>
 }
 
 export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
@@ -23,6 +23,7 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
   const [order, setOrder] = useState<Order | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [orderId, setOrderId] = useState<string | null>(null)
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -30,12 +31,18 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
     }
   }, [isAuthenticated, isLoading, router])
 
-  const fetchOrder = async () => {
+  useEffect(() => {
+    params.then(({ orderId }) => {
+      setOrderId(orderId)
+    })
+  }, [params])
+
+  const fetchOrder = async (orderIdParam: string) => {
     try {
       setLoading(true)
       setError(null)
 
-      const response = await fetch(`/api/orders/${params.orderId}`)
+      const response = await fetch(`/api/orders/${orderIdParam}`)
       
       if (!response.ok) {
         if (response.status === 404) {
@@ -56,10 +63,10 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
   }
 
   useEffect(() => {
-    if (isAuthenticated) {
-      fetchOrder()
+    if (isAuthenticated && orderId) {
+      fetchOrder(orderId)
     }
-  }, [isAuthenticated, params.orderId])
+  }, [isAuthenticated, orderId])
 
   const handleOrderUpdate = (updatedOrder: Order) => {
     setOrder(updatedOrder)

@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
         filteredProducts = filteredProducts.filter(
           product => 
             product.name.toLowerCase().includes(searchTerm) ||
-            product.description.toLowerCase().includes(searchTerm)
+            (product.description && product.description.toLowerCase().includes(searchTerm))
         )
       }
 

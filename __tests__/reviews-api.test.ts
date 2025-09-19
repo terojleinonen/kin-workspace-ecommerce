@@ -4,8 +4,11 @@ import { GET as getProductReviews } from '../app/api/reviews/[productId]/route'
 import { POST as voteHelpful } from '../app/api/reviews/helpful/route'
 
 // Mock NextRequest
-function createMockRequest(url: string, options: RequestInit = {}) {
-  return new NextRequest(url, options)
+function createMockRequest(url: string, options: any = {}) {
+  return new NextRequest(url, {
+    ...options,
+    signal: options.signal || undefined
+  })
 }
 
 describe('Reviews API', () => {
@@ -189,7 +192,7 @@ describe('Reviews API', () => {
   describe('GET /api/reviews/[productId]', () => {
     it('should fetch reviews for specific product', async () => {
       const request = createMockRequest('http://localhost:3000/api/reviews/desk-001')
-      const response = await getProductReviews(request, { params: { productId: 'desk-001' } })
+      const response = await getProductReviews(request, { params: Promise.resolve({ productId: 'desk-001' }) })
       const data = await response.json()
 
       expect(response.status).toBe(200)
@@ -200,7 +203,7 @@ describe('Reviews API', () => {
 
     it('should include summary when requested', async () => {
       const request = createMockRequest('http://localhost:3000/api/reviews/desk-001?includeSummary=true')
-      const response = await getProductReviews(request, { params: { productId: 'desk-001' } })
+      const response = await getProductReviews(request, { params: Promise.resolve({ productId: 'desk-001' }) })
       const data = await response.json()
 
       expect(response.status).toBe(200)
@@ -213,7 +216,7 @@ describe('Reviews API', () => {
 
     it('should return empty array for product with no reviews', async () => {
       const request = createMockRequest('http://localhost:3000/api/reviews/nonexistent-product')
-      const response = await getProductReviews(request, { params: { productId: 'nonexistent-product' } })
+      const response = await getProductReviews(request, { params: Promise.resolve({ productId: 'nonexistent-product' }) })
       const data = await response.json()
 
       expect(response.status).toBe(200)

@@ -21,17 +21,29 @@ export async function GET(request: NextRequest) {
         email: {
           startsWith: 'demo'
         },
-        email: {
-          not: 'admin@kinworkspace.com'
+        NOT: {
+          email: 'admin@kinworkspace.com'
         }
       }
     })
 
+    // Get demo users first
+    const demoUsers = await prisma.user.findMany({
+      where: {
+        email: {
+          startsWith: 'demo'
+        }
+      },
+      select: { id: true }
+    })
+    
+    const demoUserIds = demoUsers.map(user => user.id)
+
     // Count demo orders
     const demoOrderCount = await prisma.order.count({
       where: {
-        id: {
-          startsWith: 'DEMO-'
+        userId: {
+          in: demoUserIds
         }
       }
     })
@@ -40,7 +52,7 @@ export async function GET(request: NextRequest) {
     const demoReviewCount = await prisma.review.count({
       where: {
         userId: {
-          startsWith: 'demo-user'
+          in: demoUserIds
         }
       }
     })
@@ -48,8 +60,8 @@ export async function GET(request: NextRequest) {
     // Get last reset time (approximate based on newest demo order)
     const newestDemoOrder = await prisma.order.findFirst({
       where: {
-        id: {
-          startsWith: 'DEMO-'
+        userId: {
+          in: demoUserIds
         }
       },
       orderBy: {

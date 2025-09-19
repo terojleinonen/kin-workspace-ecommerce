@@ -43,7 +43,7 @@ describe('Products API', () => {
   test('should get product categories', async () => {
     const request = new NextRequest('http://localhost:3000/api/products/categories')
     
-    const response = await getCategoriesHandler(request)
+    const response = await getCategoriesHandler()
     const data = await response.json()
 
     expect(response.status).toBe(200)
@@ -68,7 +68,7 @@ describe('Products API', () => {
     // Now test getting by slug
     const request = new NextRequest(`http://localhost:3000/api/products/${testProduct.slug}`)
     
-    const response = await getProductBySlugHandler(request, { params: { slug: testProduct.slug } })
+    const response = await getProductBySlugHandler(request, { params: Promise.resolve({ slug: testProduct.slug }) })
     const data = await response.json()
 
     expect(response.status).toBe(200)
@@ -81,7 +81,7 @@ describe('Products API', () => {
   test('should return 404 for non-existent product slug', async () => {
     const request = new NextRequest('http://localhost:3000/api/products/non-existent-product')
     
-    const response = await getProductBySlugHandler(request, { params: { slug: 'non-existent-product' } })
+    const response = await getProductBySlugHandler(request, { params: Promise.resolve({ slug: 'non-existent-product' }) })
     const data = await response.json()
 
     expect(response.status).toBe(404)

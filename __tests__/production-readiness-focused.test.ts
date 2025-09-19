@@ -6,12 +6,12 @@
  */
 
 // Mock environment variables
-const originalEnv = process.env
+const originalEnvFocused = process.env
 
 beforeEach(() => {
   jest.resetModules()
   process.env = { 
-    ...originalEnv,
+    ...originalEnvFocused,
     // Set minimal required environment variables
     DATABASE_URL: 'file:./test.db',
     JWT_SECRET: 'test-jwt-secret-that-is-long-enough-for-validation',
@@ -21,7 +21,7 @@ beforeEach(() => {
 })
 
 afterAll(() => {
-  process.env = originalEnv
+  process.env = originalEnvFocused
 })
 
 describe('Production Readiness Tests', () => {
@@ -186,7 +186,7 @@ describe('Production Readiness Tests', () => {
 
     test('should validate production deployment checklist', () => {
       // Set up production-like environment
-      process.env.NODE_ENV = 'production'
+      Object.defineProperty(process.env, 'NODE_ENV', { value: 'production', writable: true })
       process.env.NEXT_PUBLIC_SITE_URL = 'https://kinworkspace.com'
       process.env.STRIPE_SECRET_KEY = 'sk_live_123'
       process.env.SENDGRID_API_KEY = 'SG.live_key'
@@ -337,7 +337,7 @@ describe('Production Readiness Tests', () => {
   describe('Monitoring and Observability', () => {
     test('should validate error tracking configuration', () => {
       process.env.SENTRY_DSN = 'https://test@sentry.io/123456'
-      process.env.NODE_ENV = 'production'
+      Object.defineProperty(process.env, 'NODE_ENV', { value: 'production', writable: true })
 
       jest.resetModules()
       const { validateMonitoringConfig } = require('../app/lib/config')
