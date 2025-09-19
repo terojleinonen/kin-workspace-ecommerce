@@ -674,3 +674,20 @@ export class StripePaymentService extends PaymentService {
     }
   }
 }
+
+// Stripe configuration validation for production readiness
+export function validateStripeConfig(): {
+  isValid: boolean
+  publicKey?: string
+  hasWebhookSecret: boolean
+} {
+  const stripePublicKey = process.env.STRIPE_PUBLIC_KEY
+  const stripeSecretKey = process.env.STRIPE_SECRET_KEY
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
+  
+  return {
+    isValid: !!(stripePublicKey && stripeSecretKey),
+    publicKey: stripePublicKey,
+    hasWebhookSecret: !!webhookSecret
+  }
+}
